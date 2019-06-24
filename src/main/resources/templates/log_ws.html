@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>logReader</title>
+</head>
+<body>
+<button onclick="closeSocket()">关闭日志</button>
+<div id="log-container" style="height: 650px; overflow-y: scroll; background: #333; color: #aaa; padding: 10px;">
+    <div><pre style="font-size: 14px;"></pre></div>
+</div>
+</body>
+<script src="https://cdn.bootcss.com/jquery/2.1.4/jquery.js"></script>
+<script>
+    // 从URL获取参数信息
+    function getQueryString(name) {
+        var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);//search,查询？后面的参数，并匹配正则
+        return r != null ? decodeURI(r[2]) : null;
+    }
+    // uuid
+    function S4() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    }
+    function guid() {
+        return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+    }
+    function gurl() {
+        var url = getQueryString("url");
+        if (url == null) {
+            return null;
+            /*appends("url is not setted !");
+            return setTimeout(gurl(), 1000);*/
+        }
+        return url += "/" + guid();
+    }
+
+    var socket;
+    $("#log-container div").ready(function () {
+        if(typeof(WebSocket) == "undefined") {
+            console.log("您的浏览器不支持WebSocket");
+            alert("您的浏览器不支持WebSocket");
+        }else{
+            console.log("您的浏览器支持WebSocket");
+            var url = gurl();
+            if (url == null) {
+                appends("Log reader url must not be null !");
+                return;
+            }
+            appends(url);
+            //实现化WebSocket对象，指定要连接的服务器地址与端口，建立连接，如：ws://192.168.110.228:10505/log/websocket/20
+            socket = new WebSocket(url);
+            //打开事件
+            socket.onopen = function() {
+                console.log("Socket 已打开");
+                appends(socket.url + " open !");
+                appends("");
+                socket.send("-f");
+            };
+            //获得消息事件
+            socket.onmessage = function(msgEvent) {
+                //document.write(msgEvent.data);
+                appends(msgEvent.data);
+            };
+            //关闭事件
+            socket.onclose = function () {
+                appends("");
+                appends(socket.url + " close !");
+            }
+            //发生了错误事件
+            socket.onerror = function() {
+                appends(socket.url + " error !");
+                closeSocket();
+            }
+        }
+    });
+
+    function appends(content) {
+        $("#log-container div pre").append(content).append("<br/>");
+        $("#log-container").scrollTop($("#log-container div").height() - $("#log-container").height());
+    }
+
+    function closeSocket() {
+        socket.close();
+        var state;
+        switch (socket.readyState) {
+            case 2: state = '正在关闭...'; break;
+            case 3: state = '已关闭'; break;
+        }
+        appends("Websocket closed ! " + state);
+    }
+
+    window.onbeforeunload = function(event) {
+        closeSocket();
+    }
+</script>
+</html>

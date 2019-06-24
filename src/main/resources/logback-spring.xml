@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<contextName>logback</contextName>
+
+	<!-- 彩色日志 -->
+	<!-- 彩色日志依赖的渲染类 -->
+	<conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+	<conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+	<conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+	<!-- 彩色日志格式 -->
+	<property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}" />
+	<!-- Console 输出设置 -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
+			<charset>utf8</charset>
+		</encoder>
+	</appender>
+
+	<!-- 文件保存日志的相关配置 ERROR -->
+	<appender name="ERROR-OUT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 保存日志文件的路径 -->
+		<file>d:/logs/error.log</file>
+		<!-- 日志格式 -->
+		<encoder>
+			<!--<pattern>%d{yyyy-MM-dd HH:mm:ss} [%class:%line] - %m%n</pattern>-->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n</pattern>
+			<!--<pattern>${CONSOLE_LOG_PATTERN}</pattern>-->
+			<charset>utf8</charset>
+		</encoder>
+		<!-- 日志级别过滤器 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<!-- 过滤的级别 -->
+			<level>ERROR</level>
+			<!-- 匹配时的操作：接收（记录） -->
+			<onMatch>ACCEPT</onMatch>
+			<!-- 不匹配时的操作：拒绝（不记录） -->
+			<onMismatch>DENY</onMismatch>
+		</filter>
+		<!-- 循环政策：基于时间和Size创建日志文件 -->
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- 日志文件名格式 -->
+			<fileNamePattern>d:/logs/error/%d{yyyyMMdd}.%i-error.log</fileNamePattern>
+			<!-- 最大保存时间：30天-->
+			<maxHistory>30</maxHistory>
+			<maxFileSize>100MB</maxFileSize>
+		</rollingPolicy>
+
+		<!--两个策略不能同时使用-->
+		<!--<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			&lt;!&ndash; 日志文件最大大小 &ndash;&gt;
+			<MaxFileSize>100MB</MaxFileSize>
+		</triggeringPolicy>-->
+	</appender>
+
+	<!-- 文件保存日志的相关配置 INFO -->
+	<appender name="INFO-OUT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<!-- 保存日志文件的路径 -->
+		<file>d:/logs/info.log</file>
+		<!-- 日志格式 -->
+		<encoder>
+			<!--<pattern>%d{yyyy-MM-dd HH:mm:ss} [%class:%line] - %m%n</pattern>-->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%15.15t] %-40.40logger{39} : %m%n</pattern>
+			<!--<pattern>${CONSOLE_LOG_PATTERN}</pattern>-->
+			<charset>utf8</charset>
+		</encoder>
+		<!-- 日志级别过滤器 -->
+		<filter class="com.luo.log.log3.LogbackFilter"></filter>	<!--其它过滤器上面，只要一个-->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+		<!-- 过滤的级别 -->
+			<level>ERROR</level>
+		<!-- 匹配时的操作：接收（记录） -->
+			<onMatch>DENY</onMatch>
+		<!-- 不匹配时的操作：拒绝（不记录） -->
+			<onMismatch>ACCEPT</onMismatch>
+		</filter>
+		<!-- 循环政策：基于时间和size创建日志文件 -->
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<!-- 日志文件名格式 -->
+			<fileNamePattern>d:/logs/info/%d{yyyyMMdd}.%i-info.log</fileNamePattern>
+			<!-- 最大保存时间：30天-->
+			<maxHistory>30</maxHistory>
+			<maxFileSize>100MB</maxFileSize>
+		</rollingPolicy>
+	</appender>
+
+	<!-- 输出mybatis的sql语句,没有这句就无法输出mybatis的sql语句，name属性指定到要输出日志的dao，即mybatis要代理的dao -->
+	<logger name="mapper" level="DEBUG"/>	<!--这种方式需要和mybatis-config配合-->
+	<!--<logger name="com.lccx.**.mapper" level="DEBUG"/>-->	<!--通配符无效，不知道怎么搞-->
+
+	<springProfile name="alpha,prev,prod">
+		<logger name="root" level="INFO" additivity="false">
+			<appender-ref ref="INFO-OUT"/>
+			<appender-ref ref="ERROR-OUT"/>
+		</logger>
+	</springProfile>
+	<springProfile name="local,dev">
+		<logger name="root" level="INFO" additivity="false">
+			<appender-ref ref="STDOUT"/>	<!--有标准输出-->
+			<appender-ref ref="INFO-OUT"/>
+			<appender-ref ref="ERROR-OUT"/>
+		</logger>
+	</springProfile>
+
+	<!-- 用来指定最基础的日志输出级别，以及appender信息 -->
+	<!--<root level="debug">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="INFO-OUT" />
+	</root>-->
+</configuration>
